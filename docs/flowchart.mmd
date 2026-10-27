@@ -1,0 +1,21 @@
+%% Source of docs/flowchart.png. Rebuild:
+%% npx -y @mermaid-js/mermaid-cli@11 -i docs/flowchart.mmd -o docs/flowchart.png -b white -s 2
+flowchart LR
+    IN["Навыки, сценарии,<br/>модель"]
+    PR["PR с правкой<br/>навыка"]:::mvp
+    RUN["Запуск агента<br/>в Docker"]
+    LOG[("Файлы, лог,<br/>цена и время")]
+    CHECK["Проверка<br/>результата кодом"]
+    SKILL["Какой навык<br/>открыл агент"]:::mvp
+    JUDGE["LLM-судья<br/>для текста"]:::mvp
+    WHY["Причина провала<br/>правила и LLM"]:::mvp
+    OLD[("Запуски<br/>старой версии")]:::mvp
+    STAT["Сравнение версий<br/>бейзлайн по средним,<br/>MVP тестом"]
+    REP["Отчет,<br/>в MVP статус в PR"]
+
+    IN & PR --> RUN --> LOG
+    LOG --> CHECK & SKILL & JUDGE & WHY
+    CHECK & SKILL & JUDGE & OLD --> STAT
+    STAT & WHY --> REP
+
+    classDef mvp stroke-dasharray: 5 5
