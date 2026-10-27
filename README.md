@@ -29,4 +29,4 @@ uv run python -m skills_testbed.power   # таблица чувствитель�
 
 Правила веток и PR в [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Автор Ярослав Рогоза ([@123yaroslav](https://github.com/123yaroslav)). Менторы Анна Шумилова и Иван Александров. Лицензия [MIT](LICENSE).
+Автор Ярослав Рогоза ([123yaroslav](https://github.com/123yaroslav)). Ревьюеры ДЗ Анна Шумилова ([ann04ka](https://github.com/ann04ka)) и Иван Александров ([Ivanich-spb](https://github.com/Ivanich-spb)). Лицензия [MIT](LICENSE).
