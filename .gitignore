@@ -22,6 +22,9 @@ htmlcov/
 runs/
 artifacts/
 
+# Downloaded raw data, rebuilt by scripts/fetch_eda_data.py
+data/raw/
+
 # OS and editors
 .DS_Store
 .idea/
