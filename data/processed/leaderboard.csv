@@ -1,0 +1,25 @@
+model,agent,with_skills_score,without_skills_score,skill_lift,coverage_status
+GPT-5.5,openhands,67.3,51.5,15.8,full
+GPT-5.5,codex,66.5,46.8,19.7,full
+Opus 4.7,claude-code,61.2,43,18.2,full
+Gemini 3.1 Pro,gemini-cli,60.8,36,24.8,full
+GLM 5.1,openhands,58.4,32.7,25.7,full
+Gemini 3 Flash,gemini-cli,54.6068,34.2184,20.3884,full
+Opus 4.8,openhands,54.1,45.7,8.4,full
+Kimi K2.6,openhands,54,33.4,20.6,full
+Opus 4.7,openhands,53.1,42.1,11.1,full
+MiniMax M3,openhands,53,29.7,23.3,full
+Gemini 3.1 Pro,openhands,52.8,33.8,19,full
+GPT-5.2,codex,51.7046,29.6978,22.0068,full
+Opus 4.6,claude-code,50.2241,33.6762,16.5479,partial
+DeepSeek V4 Pro,openhands,50.1,26.9,23.2,full
+Opus 4.5,claude-code,49.0395,23.8165,25.223,partial
+Gemini 3.5 Flash,openhands,48.2,41.1,7.1,full
+Sonnet 4.6,openhands,47.2,33.5,13.6,full
+DeepSeek V4 Flash,openhands,44.7,27.5,17.2,full
+Grok 4.3,openhands,41.7,22.8,18.8,full
+GPT-5.4 Mini,openhands,41.4,29.9,11.5,full
+Sonnet 4.5,claude-code,36.1723,16.7204,19.4519,partial
+MiniMax M2.7,openhands,34.9,18.1,16.8,full
+Haiku 4.5,claude-code,30.0831,8.7935,21.2897,full
+Gemini 3.1 Flash Lite,openhands,20.1,16,4.1,full
