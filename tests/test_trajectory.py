@@ -57,3 +57,12 @@ def test_diff_content_is_read(tmp_path: Path) -> None:
     path = tmp_path / "log.jsonl"
     path.write_text(json.dumps(edit) + "\n\n", encoding="utf-8")
     assert tool_calls(read_events(path))[0].text == "{}"
+
+
+def test_openhands_skill_call() -> None:
+    text = "Tool: invoke_skill\nResult:\n[skill: architectural-dxf-extraction]\n"
+    event = call("Use the dxf skill", text)
+    event["kind"] = "skill"
+    calls = tool_calls([call("Terminal", "ls"), event])
+    assert skills_opened(calls) == ["architectural-dxf-extraction"]
+    assert summarize([call("Terminal", "ls"), event]).first_skill_call == 1

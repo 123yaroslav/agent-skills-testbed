@@ -1,4 +1,4 @@
-"""Download the public SkillsBench data used in notebooks/eda.ipynb.
+"""Download the public SkillsBench data used in notebooks/eda.ipynb and notebooks/models.ipynb.
 
 Sources are pinned, so data/processed can be rebuilt exactly. Raw files go to data/raw,
 which is not tracked by git. Run:
@@ -10,8 +10,10 @@ which is not tracked by git. Run:
 from __future__ import annotations
 
 import csv
+import json
 import subprocess
 import time
+import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -28,8 +30,10 @@ HF_FILES = (
     "analysis/opus48_pr11_rerun_20260611/skill_invocation_rate.csv",
     "leaderboard/skillsbench/v1.1/official.csv",
 )
-# Per-trial files for the Claude Code runs. Only Claude Code is the agent of the testbed.
+# Per-trial files. Claude Code is the agent of the testbed. The audited OpenHands failures are
+# needed too, they are the only failures with an independent cause label.
 TRIAL_FILES = ("result.json", "timing.json", "trajectory/acp_trajectory.jsonl")
+AUDIT = HF_FILES[1]
 
 # SkillsBench tasks and skills, release v1.1, Apache-2.0.
 SB_REPO = "https://github.com/benchflow-ai/skillsbench.git"
@@ -41,7 +45,7 @@ def hf_url(path: str) -> str:
     return f"https://huggingface.co/datasets/{HF_REPO}/resolve/{HF_REV}/{path}"
 
 
-def download(url: str, dest: Path, attempts: int = 4) -> None:
+def download(url: str, dest: Path, attempts: int = 4, missing_ok: bool = False) -> None:
     if dest.exists() and dest.stat().st_size > 0:
         return
     if not url.startswith("https://"):
@@ -55,6 +59,12 @@ def download(url: str, dest: Path, attempts: int = 4) -> None:
             tmp.write_bytes(data)
             tmp.replace(dest)
             return
+        except urllib.error.HTTPError as error:
+            if error.code == 404 and missing_ok:
+                return
+            if attempt == attempts - 1:
+                raise
+            time.sleep(2**attempt)
         except OSError:
             if attempt == attempts - 1:
                 raise
@@ -69,6 +79,12 @@ def claude_code_trials(selected_trials: Path) -> list[str]:
     with selected_trials.open(encoding="utf-8", newline="") as f:
         rows = [r for r in csv.DictReader(f) if r["harness"] == "claude-code"]
     return [r["dest_path"].replace("/v0.1/", "/v1.1/", 1) for r in rows]
+
+
+def audited_trials(audit: Path) -> list[str]:
+    """Paths of the failed trials that the SkillsBench failure audit labeled."""
+    rows = json.loads(audit.read_text(encoding="utf-8"))["rows"]
+    return sorted({row["path"] for row in rows})
 
 
 def git(*args: str, cwd: Path | None = None) -> str:
@@ -97,10 +113,16 @@ def main() -> None:
     for path in HF_FILES:
         download(hf_url(path), RAW / "hf" / path)
     trials = claude_code_trials(RAW / "hf" / HF_FILES[0])
-    jobs = [(hf_url(f"{t}/{f}"), RAW / "hf" / t / f) for t in trials for f in TRIAL_FILES]
+    audited = audited_trials(RAW / "hf" / AUDIT)
+    # Some audited trials have no log at all, the audit marks them as infrastructure failures.
+    jobs = [(hf_url(f"{t}/{f}"), RAW / "hf" / t / f, False) for t in trials for f in TRIAL_FILES]
+    jobs += [(hf_url(f"{t}/{f}"), RAW / "hf" / t / f, True) for t in audited for f in TRIAL_FILES]
     with ThreadPoolExecutor(max_workers=16) as pool:
-        list(pool.map(lambda job: download(*job), jobs))
-    print(f"downloaded {len(HF_FILES)} tables and {len(trials)} Claude Code trials")
+        list(pool.map(lambda job: download(job[0], job[1], missing_ok=job[2]), jobs))
+    print(
+        f"downloaded {len(HF_FILES)} tables, {len(trials)} Claude Code trials "
+        f"and {len(audited)} audited failures"
+    )
     fetch_skillsbench()
     print(f"skillsbench at {SB_REV[:7]} in {RAW / 'skillsbench'}")
 

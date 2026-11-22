@@ -4,7 +4,7 @@
 
 Стенд прогоняет агента на задачах с документами и данными с навыком (Agent Skill) и без него. Он показывает, помогает ли навык, берет ли агент нужный навык из библиотеки, почему прогон провалился и не стало ли хуже после обновления. Навыки сейчас почти не тестируют, а их эффект зависит от модели и бывает отрицательным.
 
-Готовы [дизайн-документ](docs/ml_system_design_doc.md), [EDA](notebooks/eda.ipynb) на открытых данных SkillsBench, модуль статистики и разбор логов агента. Проект курса ML System Design, ИТМО, 2026.
+Готовы [дизайн-документ](docs/ml_system_design_doc.md), [EDA](notebooks/eda.ipynb) на открытых данных SkillsBench и [бейзлайн и MVP](notebooks/models.ipynb) двух моделей стенда. Это тест «стало хуже» и классификатор причин провала. Проект курса ML System Design, ИТМО, 2026.
 
 ## Запуск
 
@@ -27,15 +27,25 @@ uv run python scripts/build_eda_tables.py
 uv run --group eda jupyter nbconvert --to notebook --execute --inplace notebooks/eda.ipynb
 ```
 
+Бейзлайн и MVP пересобираются так. Классификатору нужен вход в Claude Code, но ответы модели уже лежат в кэше, поэтому повторный запуск ничего не стоит.
+
+```bash
+uv run python scripts/evaluate_regression.py
+uv run python scripts/classify_failures.py --split tune
+uv run python scripts/classify_failures.py --split test
+uv run --group eda jupyter nbconvert --to notebook --execute --inplace notebooks/models.ipynb
+```
+
 Линтер и форматер ruff, типы проверяет mypy в строгом режиме, ключи API ловит gitleaks. Все это запускают pre-commit перед коммитом и CI на каждый PR.
 
 | Путь | Что там |
 |---|---|
 | `docs/` | Дизайн-документ |
 | `notebooks/eda.ipynb` | EDA с графиками и выводами |
-| `data/processed/` | Таблицы для EDA |
-| `src/skills_testbed/` | Код стенда, статистика и разбор логов |
-| `scripts/` | Загрузка данных и сборка таблиц |
+| `notebooks/models.ipynb` | Бейзлайн и MVP, подбор порогов и оценка на отложенных задачах |
+| `data/processed/` | Таблицы для EDA и оценки моделей, кэш ответов LLM |
+| `src/skills_testbed/` | Код стенда. Тест «стало хуже», классификатор причин, статистика и разбор логов |
+| `scripts/` | Загрузка данных, сборка таблиц, оценка моделей |
 | `tests/` | Тесты |
 
 Правила веток и PR в [CONTRIBUTING.md](CONTRIBUTING.md).
