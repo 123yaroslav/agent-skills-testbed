@@ -8,12 +8,14 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+# Claude Code logs a "Skill" tool call, OpenHands an invoke_skill call of kind "skill".
 SKILL_LAUNCH = re.compile(r"Launching skill: (\S+)")
+SKILL_INVOKE = re.compile(r"\[skill: ([^\]\s]+)\]")
 # Tool errors caused by the container, not by the agent. Kept short on purpose: this is the
 # rule baseline of the failure classifier, the LLM handles everything else.
 ENVIRONMENT_ERRORS = re.compile(
@@ -60,7 +62,7 @@ def _text(content: object) -> str:
     return ""
 
 
-def tool_calls(events: Iterable[dict[str, Any]]) -> list[ToolCall]:
+def tool_calls(events: Iterable[Mapping[str, Any]]) -> list[ToolCall]:
     return [
         ToolCall(
             title=str(e.get("title", "")),
@@ -79,13 +81,15 @@ def skills_opened(calls: Iterable[ToolCall]) -> list[str]:
     for call in calls:
         if call.title == "Skill":
             names.extend(SKILL_LAUNCH.findall(call.text))
+        elif call.kind == "skill":
+            names.extend(SKILL_INVOKE.findall(call.text)[:1])
     return names
 
 
-def summarize(events: Iterable[dict[str, Any]]) -> RunSummary:
+def summarize(events: Iterable[Mapping[str, Any]]) -> RunSummary:
     calls = tool_calls(events)
     failed = [c for c in calls if c.status == "failed"]
-    first = next((i for i, c in enumerate(calls) if c.title == "Skill"), None)
+    first = next((i for i, c in enumerate(calls) if c.title == "Skill" or c.kind == "skill"), None)
     return RunSummary(
         n_tool_calls=len(calls),
         n_failed=len(failed),
