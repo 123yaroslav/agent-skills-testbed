@@ -1,14 +1,19 @@
 # Данные для EDA
 
-Здесь лежат таблицы, которые читает [`notebooks/eda.ipynb`](../notebooks/eda.ipynb). Это выжимка из открытых данных SkillsBench. Текст логов в репозиторий не попадает, только посчитанные из него признаки.
+Здесь лежат таблицы, которые читают [`notebooks/eda.ipynb`](../notebooks/eda.ipynb) и [`notebooks/models.ipynb`](../notebooks/models.ipynb). Это выжимка из открытых данных SkillsBench. Текст логов в репозиторий не попадает, только посчитанные из него признаки и короткие цитаты, которыми классификатор подтверждает ответ.
 
 Пересобрать таблицы можно так.
 
 ```bash
 uv sync --group eda
-uv run python scripts/fetch_eda_data.py    # около 60 МБ в data/raw, эта папка не в git
-uv run python scripts/build_eda_tables.py  # таблицы в data/processed
+uv run python scripts/fetch_eda_data.py    # около 250 МБ в data/raw, эта папка не в git
+uv run python scripts/build_eda_tables.py  # таблицы для EDA в data/processed
+uv run python scripts/evaluate_regression.py               # проверки теста «стало хуже»
+uv run python scripts/classify_failures.py --split tune    # классификатор, часть для настройки
+uv run python scripts/classify_failures.py --split test    # классификатор, отложенная часть
 ```
+
+Классификатор вызывает Claude Haiku через Claude Code в режиме без интерфейса, нужен вход в Claude Code. Ответы модели лежат в `failure_llm_cache.jsonl`, поэтому повторный запуск ничего не стоит и дает те же цифры.
 
 ## Источники
 
@@ -28,5 +33,8 @@ uv run python scripts/build_eda_tables.py  # таблицы в data/processed
 | `failure_audit.csv` | 678 | Провал из аудита SkillsBench для трех моделей в OpenHands с вердиктом и категорией |
 | `leaderboard.csv` | 24 | Строка итоговой таблицы SkillsBench v1.1 |
 | `openhands_skill_use.csv` | 125 | Запуск OpenHands с Opus 4.8 и навыками. Открывал ли агент навык |
+| `regression_checks.csv.gz` | 21000 | Смоделированная проверка PR из 12 сценариев. Вид проверки, настоящее падение доли успеха, решение бейзлайна, p-значения MVP после 3 и 5 запусков |
+| `failure_predictions_haiku.csv` | 666 | Провал из аудита SkillsBench с логом. Вердикт аудита, ответы бейзлайна и MVP, цитата из лога и цена вызова LLM |
+| `failure_llm_cache.jsonl` | 633 | Ответ LLM на один провал. Поле prompt_hash это хеш модели, системного промпта и сжатого лога |
 
 Исход запуска бывает трех видов. `pass` значит проверка прошла полностью, `fail` значит не прошла, `timeout` значит агент не уложился в лимит времени. Задачи на документы и данные это категории office-white-collar и finance-economics.
